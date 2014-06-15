@@ -1,8 +1,8 @@
 INCLUDEDIR=util/include
 LIBDIR=util/lib
 CC=gcc
-CFLAGS=-I. -I$INCLUDEDIR/include
-CLIBS=$LIBDIR/lib/csupport.a $LIBDIR/lib/cspice.a -L$LIBDIR -lgsl -lgslcblas
+CFLAGS=-I. -I$(INCLUDEDIR)
+CLIBS=$(LIBDIR)/csupport.a $(LIBDIR)/cspice.a -L$(LIBDIR) -lgsl -lgslcblas
 USER=root
 GROUP=www-data
 
