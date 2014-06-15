@@ -1,0 +1,5 @@
+\begindata
+
+KERNELS_TO_LOAD = ('de421.bsp','naif0010.tls','pck00010.tpc','frame.tk')
+
+\begintext
