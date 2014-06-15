@@ -15,15 +15,12 @@ Get a copy of from https://github.com/facom/iContact:
 Install util tools:
 	 
       $ cd iContact
+      (edit install.sh and set architecture)
       $ source install.sh
 
 Update to the last version:
        
-      $ git pull
-
-Merge to the last version:
-
-      $ git merge
+      $ make pull
 
 For contributors
 ----------------
