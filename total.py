@@ -61,7 +61,7 @@ title(r"Ocultacion de Marte por la Luna, Julio 5 a 6 de 2014, 01:30-02:30 UTC",
       position=(0.5,1.05),fontsize=12)
 text(0.5,-0.08,r"SAA - UdeA (Medellin - Colombia)",transform=ax.transAxes,
      horizontalalignment='center',fontsize=10)
-text(0.5,-0.11,r"Tiempos de contacto en: http://bit.ly/aristarco-0705-interactivo",transform=ax.transAxes,
+text(0.5,-0.11,r"Tiempos de contacto en: http://bit.ly/aristarco-0705-contactos",transform=ax.transAxes,
      horizontalalignment='center',fontsize=10)
 
 savefig("images/totalidad.png")
