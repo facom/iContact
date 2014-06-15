@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR=$(pwd)
-ARCH="32"
-#ARCH="64"
+#ARCH="32"
+ARCH="64"
 
 ########################################
 #INSTALL GSL
@@ -26,7 +26,7 @@ cd $DIR
 echo "Installing SPICE..."
 if [ ! -e util/lib/cspice.a ];then
     cd util
-    mv cspice$ARCH.tar.Z cspice.tar.Z
+    cp cspice$ARCH.tar.Z cspice.tar.Z
     uncompress cspice.tar.Z
     tar xf cspice.tar
     cd cspice
