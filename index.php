@@ -86,6 +86,9 @@ if($accion=="Calcule")
 
   //CALL PROGRAM
   $out=shell_exec("./contact-times.out $lon $lat $alt $dut 2> tmp/contact-times.log");
+  if(!preg_match("/\w/",$out)){
+    echo "<i style=color:red>No hay ocultación en esta locación</i>";
+  }else{
   $times=preg_split("/,/",$out);
   
 echo<<<CONTENIDO
@@ -145,6 +148,7 @@ echo<<<CONTENIDO
 <p></p>
 <img src="tmp/cords-$sid.png" height=400>
 CONTENIDO;
+  }
 }
 ?>
 <H3>Franja de Totalidad</H3>

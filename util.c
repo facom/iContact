@@ -72,7 +72,7 @@ int initSpice(void)
 
   //DATE AND TIME OF OCCULTATION
   str2et_c("07/06/2014 01:30:00.000",&TINI);
-  TEND=TINI+2*HOUR;
+  TEND=TINI+3*HOUR;
 
   return 0;
 }
