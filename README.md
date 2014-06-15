@@ -22,6 +22,10 @@ Update to the last version:
        
       $ make pull
 
+Set permissions:
+	   
+      $ make perms
+
 For contributors
 ----------------
 
