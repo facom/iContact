@@ -1,73 +1,9 @@
 #include <util.c>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_roots.h>
-
-double contactFunction(double t,void *params)
-{
-  SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
-  SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
-  double angdist,aRM,aRm;
-  double cfunc;
-  double* ps=(double*)params;
-
-  double lon=ps[0];
-  double lat=ps[1];
-  double alt=ps[2];
-  /*k: Contact parameter
-    k = +0: Centers
-    k = +1: Outer contact
-    k = -1: Inner contact
-   */
-  double k=ps[3];
-  
-  bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
-		&RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
-  bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
-		&RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
-  angdist=R2D(greatCircleDistance(D2R(RAmoon*15),D2R(RAmars*15),D2R(DECmoon),D2R(DECmars)));
-  aRM=R2D(angularRadius(RMOON,dmoon));
-  aRm=R2D(angularRadius(RMARS,dmars));
-
-  cfunc=angdist-aRM-k*aRm;
-  return cfunc;
-}
-
-double contactTime(double tini,double tend,double *params)
-{
-   //////////////////////////////////////////
-  //PREPARE SOLUTION
-  //////////////////////////////////////////
-  double t;
-  int niter,maxiter=100,status;
-  double cfunc;
-  gsl_root_fsolver *solver;
-  solver=gsl_root_fsolver_alloc(gsl_root_fsolver_bisection);
-  gsl_function F;
-  F.function=&contactFunction;
-  F.params=params;
-
-  //////////////////////////////////////////
-  //SOLUTION
-  //////////////////////////////////////////
-  gsl_root_fsolver_set(solver,&F,tini,tend);
-  niter=0;
-  do{
-    niter++;
-    status=gsl_root_fsolver_iterate(solver);
-    t=gsl_root_fsolver_root(solver);
-    cfunc=contactFunction(t,params);
-    status=gsl_root_test_residual(cfunc,1E-5);
-    if(status==GSL_SUCCESS) break;
-  }while(status==GSL_CONTINUE && niter<maxiter);
-  
-  return t;
-}
 
 int main(void)
 {
   //////////////////////////////////////////
-  //CONSTANTS
+  //INITIALIZE SPICE
   //////////////////////////////////////////
   initSpice();
 

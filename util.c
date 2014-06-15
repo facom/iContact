@@ -8,8 +8,20 @@ http://naif.jpl.nasa.gov/pub/naif/
 //////////////////////////////////////////
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include <stdlib.h>
 #include <SpiceUsr.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_roots.h>
+
+//////////////////////////////////////////
+//MACROS
+//////////////////////////////////////////
+#define D2R(x) (x*M_PI/180)
+#define R2D(x) (x*180/M_PI)
+#define POWI(x,n) gsl_pow_int(x,n)
+#define SGN(x) (x<0?-1:+1)
 
 //////////////////////////////////////////
 //CONSTANTS
@@ -17,11 +29,6 @@ http://naif.jpl.nasa.gov/pub/naif/
 //WGS84
 #define C_REARTH 6378.137
 #define C_FEARTH (1/298.257223563)
-#define D2R(x) (x*M_PI/180)
-#define R2D(x) (x*180/M_PI)
-#define POWI(x,n) gsl_pow_int(x,n)
-
-#define SGN(x) (x<0?-1:+1)
 #define HOUR 3600.0
 #define MINUTE 60.0
 #define CSPEED (clight_c())
@@ -34,6 +41,7 @@ double REARTH;
 double FEARTH;
 double RMOON;
 double RMARS;
+double TINI,TEND;
 
 //////////////////////////////////////////
 //ROUTINES
@@ -61,6 +69,10 @@ int initSpice(void)
   //MOON RADII
   bodvrd_c("MOON","RADII",3,&n,radii);
   RMOON=radii[0];
+
+  //DATE AND TIME OF OCCULTATION
+  str2et_c("07/06/2014 01:30:00.000",&TINI);
+  TEND=TINI+2*HOUR;
 
   return 0;
 }
@@ -175,4 +187,165 @@ double angularRadius(double R,double d)
   aR=atan(R/d);
 
   return aR;
+}
+
+double contactFunction(double t,void *params)
+{
+  SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
+  SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
+  double angdist,aRM,aRm;
+  double cfunc;
+  double* ps=(double*)params;
+
+  double lon=ps[0];
+  double lat=ps[1];
+  double alt=ps[2];
+  /*k: Contact parameter
+    k = +0: Centers
+    k = +1: Outer contact
+    k = -1: Inner contact
+   */
+  double k=ps[3];
+  
+  bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		&RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
+  bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		&RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
+  angdist=R2D(greatCircleDistance(D2R(RAmoon*15),D2R(RAmars*15),D2R(DECmoon),D2R(DECmars)));
+  aRM=R2D(angularRadius(RMOON,dmoon));
+  aRm=R2D(angularRadius(RMARS,dmars));
+
+  cfunc=angdist-aRM-k*aRm;
+  return cfunc;
+}
+
+double contactTime(double tini,double tend,double *params)
+{
+   //////////////////////////////////////////
+  //PREPARE SOLUTION
+  //////////////////////////////////////////
+  double t;
+  int niter,maxiter=100,status;
+  double cfunc;
+  gsl_root_fsolver *solver;
+  solver=gsl_root_fsolver_alloc(gsl_root_fsolver_bisection);
+  gsl_function F;
+  F.function=&contactFunction;
+  F.params=params;
+
+  //////////////////////////////////////////
+  //SOLUTION
+  //////////////////////////////////////////
+  gsl_root_fsolver_set(solver,&F,tini,tend);
+  niter=0;
+  do{
+    niter++;
+    status=gsl_root_fsolver_iterate(solver);
+    t=gsl_root_fsolver_root(solver);
+    cfunc=contactFunction(t,params);
+    status=gsl_root_test_residual(cfunc,1E-5);
+    if(status==GSL_SUCCESS) break;
+  }while(status==GSL_CONTINUE && niter<maxiter);
+  
+  return t;
+}
+
+double occultationDistance(double lat,void *param)
+{
+  double* ps=(double*)param;
+  double lon=ps[0];
+  double alt=ps[1];
+
+  SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
+  SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
+  double dcenter,dcentermin=1E100,t,tmin,sizemin;
+  
+  for(t=TINI;t<=TEND;t+=1*MINUTE){
+    bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
+    bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
+    dcenter=R2D(greatCircleDistance(D2R(RAmars)*15,D2R(RAmoon)*15,D2R(DECmars),D2R(DECmoon)));
+    if(dcenter<=dcentermin){
+      tmin=t;
+      dcentermin=dcenter;
+      sizemin=R2D(atan(RMOON/dmoon));
+    }
+  }
+  return (dcentermin-sizemin);
+}
+
+int occultationCord(double lon,double lat,double alt,int verbose,
+		    int *Status,double *Tmin,double *Dcenter)
+{
+  char filename[200];
+  FILE *fp;
+  SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
+  SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
+  double dcenter,dcentermin=1E100,t,tmin,sizemin;
+  
+  sprintf(filename,"data/cord-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
+  if(verbose) fp=fopen(filename,"w");
+  for(t=TINI;t<=TEND;t+=1*MINUTE){
+    bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
+    bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
+    dcenter=R2D(greatCircleDistance(D2R(RAmars)*15,D2R(RAmoon)*15,D2R(DECmars),D2R(DECmoon)));
+    if(dcenter<=dcentermin){
+      tmin=t;
+      dcentermin=dcenter;
+      sizemin=R2D(atan(RMOON/dmoon));
+    }
+    if(verbose) fprintf(fp,"%.17e %e %e %e %e %e %e %e %e %e\n",t,dmars,RMARS,RAmars*15,DECmars,dmoon,RMOON,RAmoon*15,DECmoon,dcenter);
+  }
+  if(verbose) fclose(fp);
+
+  /*
+  if(verbose){
+    printf("Angular size of the moon: %e\n",sizemin);
+    printf("Minimum moon Center Distance: %e\n",dcentermin);
+    printf("Time: %e\n",tmin);
+  }
+  //*/
+  
+  if(dcentermin>sizemin)
+    *Status=0;
+  else
+    *Status=1;
+
+  *Tmin=tmin;
+  *Dcenter=dcentermin;
+
+  return 0;
+}
+
+double bisectEquation(double (*func)(double,void*),double* params,double pini,double pend,double functol)
+{
+   //////////////////////////////////////////
+  //PREPARE SOLUTION
+  //////////////////////////////////////////
+  int niter,maxiter=100,status;
+  double p,cfunc;
+  gsl_root_fsolver *solver;
+  solver=gsl_root_fsolver_alloc(gsl_root_fsolver_bisection);
+  gsl_function F;
+  F.function=func;
+  F.params=params;
+
+  //////////////////////////////////////////
+  //SOLUTION
+  //////////////////////////////////////////
+  gsl_root_fsolver_set(solver,&F,pini,pend);
+  niter=0;
+  do{
+    niter++;
+    status=gsl_root_fsolver_iterate(solver);
+    p=gsl_root_fsolver_root(solver);
+    cfunc=func(p,params);
+    status=gsl_root_test_residual(cfunc,functol);
+    if(status==GSL_SUCCESS) break;
+  }while(status==GSL_CONTINUE && niter<maxiter);
+  
+  return p;
 }
