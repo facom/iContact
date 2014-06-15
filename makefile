@@ -3,7 +3,7 @@ LIBDIR=util/lib
 CC=gcc
 CFLAGS=-I. -I$(INCLUDEDIR)
 CLIBS=$(LIBDIR)/csupport.a $(LIBDIR)/cspice.a -L$(LIBDIR) -lgsl -lgslcblas
-USER=root
+USER=www-data
 GROUP=www-data
 
 clean:

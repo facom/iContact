@@ -278,14 +278,18 @@ double occultationDistance(double lat,void *param)
 int occultationCord(double lon,double lat,double alt,int verbose,
 		    int *Status,double *Tmin,double *Dcenter)
 {
-  char filename[200];
-  FILE *fp;
+  char filename[300],infoname[300];
+  FILE *fp,*fi;
   SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
   SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
   double dcenter,dcentermin=1E100,t,tmin,sizemin;
   
-  sprintf(filename,"data/cord-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
-  if(verbose) fp=fopen(filename,"w");
+  if(verbose){
+    sprintf(filename,"data/cord-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
+    sprintf(infoname,"data/info-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
+    fp=fopen(filename,"w");
+    fi=fopen(infoname,"w");
+  }
   for(t=TINI;t<=TEND;t+=1*MINUTE){
     bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
 		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
@@ -299,7 +303,11 @@ int occultationCord(double lon,double lat,double alt,int verbose,
     }
     if(verbose) fprintf(fp,"%.17e %e %e %e %e %e %e %e %e %e\n",t,dmars,RMARS,RAmars*15,DECmars,dmoon,RMOON,RAmoon*15,DECmoon,dcenter);
   }
-  if(verbose) fclose(fp);
+  if(verbose){
+    fprintf(fi,"%e %e %e\n",lat,lon,alt);
+    fclose(fi);
+    fclose(fp);
+  }
 
   /*
   if(verbose){
