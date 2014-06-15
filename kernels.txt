@@ -1,5 +1,10 @@
 \begindata
 
-KERNELS_TO_LOAD = ('de421.bsp','naif0010.tls','pck00010.tpc','frame.tk')
+PATH_VALUES = ( 'kernels' )
+PATH_SYMBOLS = ( 'PATH' )
+KERNELS_TO_LOAD = ('$PATH/de421.bsp',
+		   '$PATH/naif0010.tls',
+		   '$PATH/pck00010.tpc',
+		   '$PATH/frame.tk')
 
 \begintext

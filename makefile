@@ -18,4 +18,4 @@ commit:
 	@git push origin master
 
 pull:
-	@git pull
+	@git pull reset --hard HEAD
