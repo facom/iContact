@@ -1,13 +1,18 @@
+INCLUDEDIR=util/include
+LIBDIR=util/lib
 CC=gcc
-CFLAGS=-I. -Iinclude
-CSPICE_LIBS=lib/csupport.a lib/cspice.a -lgsl -lgslcblas
+CFLAGS=-I. -I$INCLUDEDIR/include
+CLIBS=$LIBDIR/lib/csupport.a $LIBDIR/lib/cspice.a -L$LIBDIR -lgsl -lgslcblas
 
 clean:
-	@rm -rf *.o *.out
+	@rm -rf *.o *.out *.dat *.png
 	@find . -name "*~" -exec rm -rf {} \;
 
+cleanall:
+	@rm -rf util/lib/* util/include/*
+
 %.out:%.o
-	$(CC) $^ $(CSPICE_LIBS) -lm -o $(@:.o=.out)
+	$(CC) $^ $(CLIBS) -lm -o $(@:.o=.out)
 
 %.o:%.c
 	$(CC) $(CFLAGS) -c -g $^ -o $@ 
