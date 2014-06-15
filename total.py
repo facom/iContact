@@ -57,7 +57,7 @@ xmax=min(data[:,3].max(),data[:,5].max())
 xs=linspace(xmin,xmax,100)
 fill_between(xs,bs(xs),bn(xs),color='k',alpha=0.4,zorder=+10)
 
-title(r"Ocultacion de Marte por la Luna, Julio 5 a 6 de 2014, 01:30-02:30 UTC",
+title(r"Ocultacion de Marte por la Luna, Julio 5 de 2014, 21:00 a 22:00 UTC-5",
       position=(0.5,1.05),fontsize=12)
 text(0.5,-0.08,r"SAA - UdeA (Medellin - Colombia)",transform=ax.transAxes,
      horizontalalignment='center',fontsize=10)
