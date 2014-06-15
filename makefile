@@ -29,5 +29,5 @@ pull:
 	@git pull 
 
 perms:
-	@chown -R root.www-data .
-	chmod -R g+w .
+	@chown -R $(USER).$(GROUP) .
+	@chmod -R g+w .
