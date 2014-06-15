@@ -25,7 +25,7 @@ commit:
 	@git push origin master
 
 pull:
-	@git pull reset --hard HEAD
+	@git pull 
 
 perms:
 	@chown -R root.www-data .
