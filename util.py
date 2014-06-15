@@ -1,6 +1,7 @@
 from matplotlib import use
 use('Agg')
-from mpl_toolkits.basemap import Basemap as Map,shiftgrid as Grid
+try:
+    from mpl_toolkits.basemap import Basemap as Map,shiftgrid as Grid
 from matplotlib.pyplot import *
 from matplotlib.patches import *
 from numpy import *
