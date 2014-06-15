@@ -10,8 +10,16 @@ clean:
 	@rm -rf *.o *.out *.dat *.png
 	@find . -name "*~" -exec rm -rf {} \;
 
-cleanall:clean
+cleanall:cleangsl cleancspice
 	@rm -rf util/lib/* util/include/* util/bin/* util/share/*
+
+cleangsl:
+	@rm -rf $(LIBDIR)/*gsl*
+	@rm -rf $(INCLUDEDIR)/*gsl*
+
+cleancspice:
+	@rm -rf $(LIBDIR)/cspice.a $(LIBDIR)/csupport.a
+	@rm -rf $(INCLUDEDIR)/*.h
 
 %.out:%.o
 	$(CC) $^ $(CLIBS) -lm -o $(@:.o=.out)
