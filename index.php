@@ -153,4 +153,18 @@ CONTENIDO;
 ?>
 <H3>Franja de Totalidad</H3>
 <center><img src="images/totalidad.png"></center>
+<H4><a name="precalculados">Contactos Precalculados</a></H4>
+
+  <center><b>Medellín, Colomia</b>
+<center><img src="images/ContactosMedellin.jpg"></center>
+<p></p>
+  <center><b>Bogotá, Colomia</b>
+<center><img src="images/ContactosBogota.jpg"></center>
+  <center><b>Cali, Colomia</b>
+<center><img src="images/ContactosCali.jpg"></center>
+  <center><b>Pasto, Colomia</b>
+<center><img src="images/ContactosPasto.jpg"></center>
+  <center><b>Desierto de la Tatacoa, Colomia</b>
+<center><img src="images/ContactosTatacoa.jpg"></center>
+
 </html>
