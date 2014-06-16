@@ -25,7 +25,10 @@ function value2dec($ang)
     $ang_sec=$parts[2];
   }else if(preg_match("/\s+/",$ang)){
     $parts=preg_split("/\s+/",$ang);
+    echo "Espacio.";
     $ang_deg=$parts[0];
+    $ang_min=$parts[1];
+    $ang_sec=$parts[2];
   }else{
     $ang_deg=$ang;
     $ang_min=0.0;
@@ -45,7 +48,12 @@ function value2dec($ang)
 <center>
 <img src="images/aristarco.jpg" height=200>
 <H1>Ocultación de Marte por la Luna<br/>
-Julio 5 de 2014</H1>
+Julio 5 de 2014<br/>
+</H1>
+<H2>
+Campaña de Observación: 
+<a href=http://bit.ly/aristarco-07-05>http://bit.ly/aristarco-07-05</a>
+</H2>
 </center>
 
 <p>En esta página podrás calcular las condiciones de la ocultación de
@@ -95,6 +103,7 @@ echo<<<CONTENIDO
 <H4>Observador</H4>
   <b>Longitud:</b>$lon<br/>
   <b>Latitud:</b>$lat<br/>
+  <b>Altura:</b>$alt metros<br/>
   <b>Huso horario:</b>UTC$dut<br/>
   <p></p>
   <table border=1>
@@ -153,7 +162,10 @@ CONTENIDO;
 ?>
 <H3>Franja de Totalidad</H3>
 <center><img src="images/totalidad.png"></center>
-<H4><a name="precalculados">Contactos Precalculados</a></H4>
+<H4><a name="precalculados">Contactos Precalculados</a><br>
+Campaña de Observación: 
+<a href=http://bit.ly/aristarco-0705>http://bit.ly/aristarco-0705</a>
+</H4>
 
   <center><b>Medellín, Colomia</b>
 <center><img src="images/ContactosMedellin.jpg"></center>
