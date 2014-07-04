@@ -52,7 +52,9 @@ Julio 5 de 2014<br/>
 </H1>
 <H2>
 Campaña de Observación: 
-<a href=http://bit.ly/aristarco-07-05>http://bit.ly/aristarco-07-05</a>
+<a href=http://bit.ly/aristarco-0705>http://bit.ly/aristarco-0705</a><br/>
+Instrucciones Detalladas: 
+<a href=http://bit.ly/aristarco-0705-detalles>http://bit.ly/aristarco-0705-detalles</a>
 </H2>
 </center>
 
