@@ -1,0 +1,13 @@
+v=0.7
+r=2.5*v
+set xrange [-r:r]
+set yrange [-r:r]
+set zrange [-v:v]
+#set xlabel 'x'
+#set ylabel 'y'
+#set zlabel 'z'
+unset border
+unset xtics;unset ytics;unset ztics
+splot './elipsoid2.dat' w d lt 1 not, './z.dat' w vec lt 3 not, 'az.dat' w vec lt 18 not, 'plane.dat' w l lt 18 not, 'projection.dat' u 1:2:(0*$3) w l lw 2 lt 1 not
+pause -1
+#, 'elipse.dat' u 1:2:($2*0) w l lw 2 lt 1 not
