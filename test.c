@@ -49,7 +49,7 @@ int main(int argc,char *argv[])
 
   //FIRST CONTACT
   double t1;SpiceChar utc_t1[100];
-  /*
+  //*
   params[3]=-1.0;
   t1=contactTime(tmin,TEND,params);//CONTACT 3
   //*/
@@ -61,7 +61,7 @@ int main(int argc,char *argv[])
   params[3]=+1.0;
   t1=contactTime(TINI,tmin,params);//CONTACT 1
   //*/
-  /*
+  //*
   params[3]=+1.0;
   t1=contactTime(tmin,TEND,params);//CONTACT 4
   //*/
@@ -72,7 +72,7 @@ int main(int argc,char *argv[])
 
   //t1=4.57889016099993587e+08;
   t=t1;
-  bodyEphemeris2("MOON","MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+  bodyEphemeris("MOON","MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
 		 &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon,extra);
 
   printf("Moon: RA = %s, DEC = %s, lt = %e\n",dec2sex(RAmoonJ2000),dec2sex(DECmoonJ2000),ltmoon/60);
