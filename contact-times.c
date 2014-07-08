@@ -31,7 +31,7 @@ int main(int argc,char *argv[])
   int status;
   double tmin,dcenter;
   double t1,tm1,t2,t3,tm3,t4,duracion;
-  double params[4];
+  double params[100];
   params[0]=lon;
   params[1]=lat;
   params[2]=alt;

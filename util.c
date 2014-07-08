@@ -23,6 +23,11 @@ http://naif.jpl.nasa.gov/pub/naif/
 #define POWI(x,n) gsl_pow_int(x,n)
 #define SGN(x) (x<0?-1:+1)
 
+#define EARTH_ID "EARTH"
+#define MOON_ID "MOON"
+#define MARS_ID "MARS BARYCENTER"
+#define MARS_CENTER_ID "MARS"
+
 //////////////////////////////////////////
 //CONSTANTS
 //////////////////////////////////////////
@@ -39,8 +44,8 @@ http://naif.jpl.nasa.gov/pub/naif/
 double CPARAM;
 double REARTH;
 double FEARTH;
-double RMOON;
-double RMARS;
+double RMOON,AMOON,BMOON,FMOON;
+double RMARS,AMARS,BMARS,FMARS;
 double TINI,TEND;
 
 //////////////////////////////////////////
@@ -58,17 +63,28 @@ int initSpice(void)
   CPARAM=clight_c();
 
   //EARTH RADII
-  bodvrd_c("EARTH","RADII",3,&n,radii);
+  bodvrd_c(EARTH_ID,"RADII",3,&n,radii);
   REARTH=radii[0];
   FEARTH=(radii[0]-radii[2])/radii[0];
 
   //MARS RADII
-  bodvrd_c("MARS","RADII",3,&n,radii);
-  RMARS=radii[0];
+  bodvrd_c(MARS_CENTER_ID,"RADII",3,&n,radii);
+  AMARS=radii[0];
+  BMARS=radii[2];
+  FMARS=(AMARS-BMARS)/AMARS;
+  RMARS=(AMARS+BMARS)/2;
 
   //MOON RADII
-  bodvrd_c("MOON","RADII",3,&n,radii);
-  RMOON=radii[0];
+  bodvrd_c(MOON_ID,"RADII",3,&n,radii);
+  BMOON=1737.10;
+  AMOON=1738.14;
+  FMOON=(AMOON-BMOON)/AMOON;
+  RMOON=(AMOON+BMOON)/2;
+
+  /*
+  printf("f: earth = %e, moon = %e, mars = %e\n",
+	 FEARTH,FMOON,FMARS);
+  */
 
   //DATE AND TIME OF OCCULTATION
   str2et_c("07/06/2014 01:30:00.000",&TINI);
@@ -103,15 +119,17 @@ char *vec2str(double vec[])
 }
 
 int bodyEphemeris(ConstSpiceChar *body,
-		  SpiceDouble t,
-		  SpiceDouble cspeed,
-		  SpiceDouble lon,SpiceDouble lat,SpiceDouble alt,
-		  SpiceDouble *range,
-		  SpiceDouble *ltime,
-		  SpiceDouble *raJ2000,
-		  SpiceDouble *decJ2000,
-		  SpiceDouble *ra,
-		  SpiceDouble *dec
+		   ConstSpiceChar *bodyname,
+		   SpiceDouble t,
+		   SpiceDouble cspeed,
+		   SpiceDouble lon,SpiceDouble lat,SpiceDouble alt,
+		   SpiceDouble *range,
+		   SpiceDouble *ltime,
+		   SpiceDouble *raJ2000,
+		   SpiceDouble *decJ2000,
+		   SpiceDouble *ra,
+		   SpiceDouble *dec,
+		   SpiceDouble *extra
 		  )
 {
   SpiceDouble earthSSBJ2000[6];
@@ -119,11 +137,11 @@ int bodyEphemeris(ConstSpiceChar *body,
   SpiceDouble bodyTOPOJ2000[3],bodyTOPOEpoch[3];
   SpiceDouble Dbody,RAbody,DECbody,RAbodyJ2000,DECbodyJ2000;
   SpiceDouble observerITRF93[3],observerJ2000[3],observerSSBJ2000[3];
-  SpiceDouble M_J2000_Epoch[3][3];
+  SpiceDouble M_J2000_Epoch[3][3]={{1,0,0},{0,1,0},{0,0,1}};
   SpiceDouble M_ITRF93_J2000[3][3];
 
   SpiceDouble d,lt,ltmp,ltold,lttol=1E-2;
-  int i,ncn=10;
+  int i,ie=0,ncn=10;
 
   //ROTATION MATRIX AT THE TIME OF EPHEMERIS
   pxform_c("J2000","EARTHTRUEEPOCH",t,M_J2000_Epoch);
@@ -136,27 +154,22 @@ int bodyEphemeris(ConstSpiceChar *body,
   //LIGHT TIME CORRECTED POSITION
   i=0;
   lt=0.0;ltold=1.0;
+  spkezr_c(EARTH_ID,t,"J2000","NONE","SOLAR SYSTEM BARYCENTER",earthSSBJ2000,&ltmp);
+  vadd_c(earthSSBJ2000,observerJ2000,observerSSBJ2000);
   while((fabs(lt-ltold)/lt)>=lttol && i<ncn){
     ltold=lt;
-    spkezr_c("EARTH",t,"J2000","NONE","SOLAR SYSTEM BARYCENTER",earthSSBJ2000,&ltmp);
     spkezr_c(body,t-lt,"J2000","NONE","SOLAR SYSTEM BARYCENTER",bodySSBJ2000,&ltmp);
-    vsub_c(bodySSBJ2000,earthSSBJ2000,bodyJ2000);
-    /*
-      //IT SHOULD BE RESPECT TO OBSERVER.  NASA'S HORIZONS IS WRONG
-      vadd_c(earthSSBJ2000,observerJ2000,observerSSBJ2000);
-      vsub_c(bodySSBJ2000,observerSSBJ2000,bodyJ2000);
-    //*/
-    d=vnorm_c(bodyJ2000);
+    vsub_c(bodySSBJ2000,observerSSBJ2000,bodyTOPOJ2000);
+    d=vnorm_c(bodyTOPOJ2000);
     lt=d/cspeed;
     i++;
   }
-
-  //TOPOCENTRIC POSITION
-  vsub_c(bodyJ2000,observerJ2000,bodyTOPOJ2000);
   //RA & DEC J2000
   recrad_c(bodyTOPOJ2000,&d,&RAbodyJ2000,&DECbodyJ2000);
+
   //PRECESS POSITION
   mxv_c(M_J2000_Epoch,bodyTOPOJ2000,bodyTOPOEpoch);
+
   //RA & DEC PRECESSED
   recrad_c(bodyTOPOEpoch,&d,&RAbody,&DECbody);
 
@@ -166,6 +179,36 @@ int bodyEphemeris(ConstSpiceChar *body,
   *dec=DECbody*180/M_PI;
   *raJ2000=RAbodyJ2000*180/M_PI/15;
   *decJ2000=DECbodyJ2000*180/M_PI;
+
+  //POLE POSITION
+  SpiceDouble Rbody,fbody,poleBODY[3],poleJ2000[3],M_MOON_J2000[3][3],bodyPoleJ2000[3];
+  SpiceDouble bodyPoleTOPOJ2000[3],bodyPoleTOPOEpoch[3];
+  SpiceDouble RApole,DECpole;
+  SpiceChar Bref[100];
+  Rbody=extra[ie++];fbody=extra[ie++];
+  georec_c(0.0,M_PI/2,0.0,Rbody,fbody,poleBODY);
+  sprintf(Bref,"IAU_%s",bodyname);
+  pxform_c(Bref,"J2000",t-lt,M_MOON_J2000);
+  mxv_c(M_MOON_J2000,poleBODY,poleJ2000);
+  vadd_c(bodyJ2000,poleJ2000,bodyPoleJ2000);
+  //printf("POLE: %s\nPOLE J2000: %s\nBODY: %s\nPOLE: %s\n",vec2str(poleBODY),vec2str(poleJ2000),vec2str(bodyJ2000),vec2str(bodyPoleJ2000));
+
+  //VISUAL-POLE ANGLE
+  SpiceDouble ub[3],nb,up[3],np,cosq,q;
+  unorm_c(bodyJ2000,ub,&nb);
+  unorm_c(poleJ2000,up,&np);
+  cosq=vdot_c(ub,up);
+  q=R2D(acos(cosq));
+  if(q>90) q=180-q;
+
+  //POLE COORDINATES
+  vsub_c(bodyPoleJ2000,observerJ2000,bodyPoleTOPOJ2000);
+  mxv_c(M_J2000_Epoch,bodyPoleTOPOJ2000,bodyPoleTOPOEpoch);
+  recrad_c(bodyPoleTOPOEpoch,&d,&RApole,&DECpole);
+
+  extra[ie++]=RApole*180/M_PI/15;
+  extra[ie++]=DECpole*180/M_PI;
+  extra[ie++]=q;
   return 0;
 }
 
@@ -174,10 +217,34 @@ double greatCircleDistance(double lam1,double lam2,
 {
   double d;
 
+  //COSINE FORMULA
+  /*
   d=acos(sin(phi1)*sin(phi2)+
 	 cos(phi1)*cos(phi2)*cos(lam2-lam1));
+  //*/
   
+  //HARVESINE FORMULA
+  double sf,sl;
+  sf=sin((phi2-phi1)/2);
+  sl=sin((lam2-lam1)/2);
+  d=2*asin(sqrt(sf*sf+cos(phi1)*cos(phi2)*sl*sl));
+
   return d;
+}
+
+double positionAngle(double lam1,double lam2,
+		     double phi1,double phi2)
+{
+  double d,dlam,PA;
+  d=R2D(greatCircleDistance(D2R(lam1),D2R(lam2),
+			    D2R(phi1),D2R(phi2)));
+  dlam=fabs(lam1-lam2);
+  PA=R2D(asin(sin(D2R(dlam))*cos(D2R(phi1))/sin(D2R(d))));
+
+  if(phi1<phi2) PA=180-PA;
+  if(lam2>lam1) PA=360-PA;
+
+  return PA;
 }
 
 double angularRadius(double R,double d)
@@ -200,6 +267,8 @@ double contactFunction(double t,void *params)
   double lon=ps[0];
   double lat=ps[1];
   double alt=ps[2];
+  double extra[100];
+  int ie=0;
   /*k: Contact parameter
     k = +0: Centers
     k = +1: Outer contact
@@ -207,15 +276,47 @@ double contactFunction(double t,void *params)
    */
   double k=ps[3];
   
-  bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
-		&RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
-  bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
-		&RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
-  angdist=R2D(greatCircleDistance(D2R(RAmoon*15),D2R(RAmars*15),D2R(DECmoon),D2R(DECmars)));
-  aRM=R2D(angularRadius(RMOON,dmoon));
-  aRm=R2D(angularRadius(RMARS,dmars));
+  extra[0]=RMARS;extra[1]=FMARS;
+  bodyEphemeris(MARS_ID,MARS_CENTER_ID,t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		&RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars,extra);
+  extra[0]=RMOON;extra[1]=FMOON;
+  bodyEphemeris(MOON_ID,MOON_ID,t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		&RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon,extra);
 
+  angdist=R2D(greatCircleDistance(D2R(RAmoon*15),D2R(RAmars*15),D2R(DECmoon),D2R(DECmars)));
+  //printf("Angular distance: %.17e\n",angdist);exit(0);
+
+  //RADIUS ASSUMING NON-SPHERICITY
+  SpiceDouble RApole,DECpole,q,PA,PAp,dPA,bp;
+  RApole=extra[ie++];DECpole=extra[ie++];q=extra[ie++];
+  PAp=positionAngle(RApole*15,RAmoon*15,DECpole,DECmoon);
+  bp=BMOON*sqrt(sin(D2R(q))*sin(D2R(q))+(AMOON/BMOON)*(AMOON/BMOON)*cos(D2R(q))*cos(D2R(q)));
+  PA=positionAngle(RAmars*15,RAmoon*15,DECmars,DECmoon);
+  dPA=PA-PAp;
+  aRM=R2D(angularRadius(sqrt((AMOON*sin(D2R(dPA)))*(AMOON*sin(D2R(dPA)))+(BMOON*cos(D2R(dPA)))*(BMOON*cos(D2R(dPA)))),dmoon));
+
+  //aRM=R2D(angularRadius(RMOON,dmoon));
+  aRm=R2D(angularRadius(RMARS,dmars));
   cfunc=angdist-aRM-k*aRm;
+
+  //RETURNING INFO
+  int ip=4;
+  ps[ip++]=RAmars;//4
+  ps[ip++]=DECmars;//5
+  ps[ip++]=RAmarsJ2000;//6
+  ps[ip++]=DECmarsJ2000;//7
+  ps[ip++]=dmars;//8
+  ps[ip++]=ltmars;//9
+  ps[ip++]=RAmoon;//10
+  ps[ip++]=DECmoon;//11
+  ps[ip++]=RAmoonJ2000;//12
+  ps[ip++]=DECmoonJ2000;//13
+  ps[ip++]=dmoon;//14
+  ps[ip++]=ltmoon;//15
+  ps[ip++]=aRM;//16
+  ps[ip++]=aRm;//17
+  ps[ip++]=cfunc;//18
+
   return cfunc;
 }
 
@@ -243,9 +344,21 @@ double contactTime(double tini,double tend,double *params)
     status=gsl_root_fsolver_iterate(solver);
     t=gsl_root_fsolver_root(solver);
     cfunc=contactFunction(t,params);
-    status=gsl_root_test_residual(cfunc,1E-5);
+    status=gsl_root_test_residual(cfunc,1E-6);
     if(status==GSL_SUCCESS) break;
   }while(status==GSL_CONTINUE && niter<maxiter);
+
+  /*
+  printf("Moon coordinates (J2000):\n\tRA = %s, DEC = %s, d = %.10e, lt = %.5e, Ang.Size = %.3f\n",
+	 dec2sex(params[12]),dec2sex(params[13]),params[14],params[15]/60,2*params[16]*3600);
+  printf("Moon coordinates (Epoch):\n\tRA = %s, DEC = %s\n",
+	 dec2sex(params[10]),dec2sex(params[11]));
+  printf("Mars coordinates (J2000):\n\tRA = %s, DEC = %s, d = %.10e, lt = %.5e, Ang.Size = %.3f\n",
+	 dec2sex(params[6]),dec2sex(params[7]),params[8],params[9]/60,2*params[17]*3600);
+  printf("Mars coordinates (Epoch):\n\tRA = %s, DEC = %s\n",
+	 dec2sex(params[4]),dec2sex(params[5]));
+  printf("Cfunc = %.17e\n",params[18]);
+  */
   
   return t;
 }
@@ -259,12 +372,16 @@ double occultationDistance(double lat,void *param)
   SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
   SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
   double dcenter,dcentermin=1E100,t,tmin,sizemin;
+  double extra[100];
+  int ie=0;
   
   for(t=TINI;t<=TEND;t+=1*MINUTE){
-    bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
-		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
-    bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
-		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
+    extra[0]=RMARS;extra[1]=FMARS;
+    bodyEphemeris(MARS_ID,"MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars,extra);
+    extra[0]=RMOON;extra[1]=FMOON;
+    bodyEphemeris(MOON_ID,"MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon,extra);
     dcenter=R2D(greatCircleDistance(D2R(RAmars)*15,D2R(RAmoon)*15,D2R(DECmars),D2R(DECmoon)));
     if(dcenter<=dcentermin){
       tmin=t;
@@ -283,6 +400,8 @@ int occultationCord(double lon,double lat,double alt,int verbose,
   SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
   SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
   double dcenter,dcentermin=1E100,t,tmin,sizemin;
+  double extra[100];
+  int ie=0;
   
   if(verbose){
     sprintf(filename,"data/cord-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
@@ -291,10 +410,12 @@ int occultationCord(double lon,double lat,double alt,int verbose,
     fi=fopen(infoname,"w");
   }
   for(t=TINI;t<=TEND;t+=1*MINUTE){
-    bodyEphemeris("MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
-		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars);
-    bodyEphemeris("MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
-		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon);
+    extra[0]=RMARS;extra[0]=FMARS;
+    bodyEphemeris(MARS_ID,"MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars,extra);
+    extra[0]=RMOON;extra[0]=FMOON;
+    bodyEphemeris(MOON_ID,"MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon,extra);
     dcenter=R2D(greatCircleDistance(D2R(RAmars)*15,D2R(RAmoon)*15,D2R(DECmars),D2R(DECmoon)));
     if(dcenter<=dcentermin){
       tmin=t;
