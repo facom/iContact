@@ -349,7 +349,7 @@ double contactTime(double tini,double tend,double *params)
     if(status==GSL_SUCCESS) break;
   }while(status==GSL_CONTINUE && niter<maxiter);
 
-  /*
+  //*
   printf("Moon coordinates (J2000):\n\tRA = %s, DEC = %s, d = %.10e, lt = %.5e, Ang.Size = %.3f\n",
 	 dec2sex(params[12]),dec2sex(params[13]),params[14],params[15]/60,2*params[16]*3600);
   printf("Moon coordinates (Epoch):\n\tRA = %s, DEC = %s\n",
@@ -359,7 +359,7 @@ double contactTime(double tini,double tend,double *params)
   printf("Mars coordinates (Epoch):\n\tRA = %s, DEC = %s\n",
 	 dec2sex(params[4]),dec2sex(params[5]));
   printf("Cfunc = %.17e\n",params[18]);
-  */
+  //*/
   
   return t;
 }

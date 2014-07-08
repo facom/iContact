@@ -57,7 +57,7 @@ int main(int argc,char *argv[])
   params[3]=0.0;
   t1=contactTime(tmin,TEND,params);//CONTACT 3.5
   //*/
-  //*
+  /*
   params[3]=+1.0;
   t1=contactTime(TINI,tmin,params);//CONTACT 1
   //*/
