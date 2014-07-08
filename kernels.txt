@@ -2,9 +2,12 @@
 
 PATH_VALUES = ( 'kernels' )
 PATH_SYMBOLS = ( 'PATH' )
-KERNELS_TO_LOAD = ('$PATH/de430.bsp',
+KERNELS_TO_LOAD = ('$PATH/de421.bsp',
 		   '$PATH/naif0010.tls',
 		   '$PATH/pck00010.tpc',
-		   '$PATH/frame.tk')
+		   '$PATH/frame.tk',
+		   '$PATH/earth_assoc_itrf93.tf',
+		   '$PATH/earth_latest_high_prec.bpc'
+		   )
 
 \begintext

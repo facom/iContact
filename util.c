@@ -145,7 +145,8 @@ int bodyEphemeris(ConstSpiceChar *body,
 
   //ROTATION MATRIX AT THE TIME OF EPHEMERIS
   pxform_c("J2000","EARTHTRUEEPOCH",t,M_J2000_Epoch);
-  pxform_c("IAU_EARTH","J2000",t,M_ITRF93_J2000);
+  //pxform_c("IAU_EARTH","J2000",t,M_ITRF93_J2000);
+  pxform_c("ITRF93","J2000",t,M_ITRF93_J2000);
 
   //OBSERVER POSITION J2000
   georec_c(D2R(lon),D2R(lat),alt/1000.0,REARTH,FEARTH,observerITRF93);
