@@ -1,0 +1,23 @@
+Database:
+
+Mars searchable:
+http://craters.sjrdesign.net/
+
+Moon database:
+http://www.lpi.usra.edu/meetings/lpsc2009/pdf/1532.pdf
+
+NASA Catalogue of Lunar Nomenclature:
+http://the-moon.wikispaces.com/NASA+RP-1097
+
+Complete database in Excel:
+http://www.lpi.usra.edu/lunar/surface/Lunar_Impact_Crater_Database_v9Feb2009.xls
+
+Catalogue of lunar craters:
+http://the-moon.wikispaces.com/Catalogs+of+Lunar+Craters
+
+Small lunar crater database:
+http://www.planetary.brown.edu/html_pages/LOLAcraters.html
+
+Moon Nomenclature IAU:
+http://planetarynames.wr.usgs.gov/SearchResults?target=MOON&featureType=Mare,%20maria
+

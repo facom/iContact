@@ -7,19 +7,27 @@ USER=www-data
 GROUP=www-data
 
 clean:
+	@echo "Basic cleaning..."
 	@rm -rf *.o *.out *.dat *.png
 	@find . -name "*~" -exec rm -rf {} \;
 
-cleanall:cleangsl cleancspice
-	@rm -rf util/lib/* util/include/* util/bin/* util/share/*
+cleandata:clean
+	@echo "Cleaning data..."
+	@rm -rf data/*
 
 cleangsl:
+	@echo "Cleaning gsl..."
 	@rm -rf $(LIBDIR)/*gsl*
 	@rm -rf $(INCLUDEDIR)/*gsl*
 
 cleancspice:
+	@echo "Cleaning cspice..."
 	@rm -rf $(LIBDIR)/cspice.a $(LIBDIR)/csupport.a
 	@rm -rf $(INCLUDEDIR)/*.h
+
+cleanall:clean cleandata cleangsl cleancspice
+	@echo "Cleaning all..."
+	@rm -rf util/lib/* util/include/* util/bin/* util/share/*
 
 %.out:%.o
 	$(CC) $^ $(CLIBS) -lm -o $(@:.o=.out)

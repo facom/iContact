@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR=$(pwd)
-#ARCH="32"
-ARCH="64"
+ARCH="32"
+#ARCH="64"
 
 ########################################
 #INSTALL GSL
@@ -13,7 +13,7 @@ if [ ! -e util/lib/libgsl.a ];then
     cd gsl
     ./configure --prefix=$DIR/util && make && make install
     cd ..
-    rm -rf gsl
+    #rm -rf gsl
     echo "Done."
 else
     echo "Already installed."
@@ -31,10 +31,11 @@ if [ ! -e util/lib/cspice.a ];then
     tar xf cspice.tar
     cd cspice
     ./makeall.csh
-    mv include/* ../include
-    mv lib/* ../lib
+    cp include/* ../include
+    cp lib/* ../lib
     cd ..
-    rm -rf cspice.tar cspice
+    rm -rf cspice.tar 
+    #rm -rf cspice
     echo "Done."
 else
     echo "Already installed."

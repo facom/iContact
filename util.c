@@ -28,6 +28,12 @@ http://naif.jpl.nasa.gov/pub/naif/
 #define MARS_ID "MARS BARYCENTER"
 #define MARS_CENTER_ID "MARS"
 
+#define LON 0
+#define LAT 1
+#define ALT 2
+#define TRUE 1
+#define FALSE 0
+
 //////////////////////////////////////////
 //CONSTANTS
 //////////////////////////////////////////
@@ -439,6 +445,60 @@ int occultationCord(double lon,double lat,double alt,int verbose,
   }
   //*/
   
+  if(dcentermin>sizemin)
+    *Status=0;
+  else
+    *Status=1;
+
+  *Tmin=tmin;
+  *Dcenter=dcentermin;
+
+  return 0;
+}
+
+int occultationCord2(double *location,double tini,double tend,double dt,
+		     int verbose,
+		     int *Status,double *Tmin,double *Dcenter)
+{
+  char filename[300],infoname[300];
+  FILE *fp,*fi;
+  SpiceDouble dmars,RAmars,DECmars,RAmarsJ2000,DECmarsJ2000,ltmars;
+  SpiceDouble dmoon,RAmoon,DECmoon,RAmoonJ2000,DECmoonJ2000,ltmoon;
+  double dcenter,dcentermin=1E100,t,tmin,sizemin;
+  double lon=location[LON],lat=location[LAT],alt=location[ALT];
+  double extra[100];
+  int ie=0;
+  
+  if(verbose){
+    sprintf(filename,"data/cord-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
+    sprintf(infoname,"data/info-%+.4lf_%+.4lf_%+.3lf.dat",lon,lat,alt);
+    fp=fopen(filename,"w");
+    fi=fopen(infoname,"w");
+  }
+  for(t=tini;t<=tend;t+=dt){
+    extra[0]=RMARS;extra[0]=FMARS;
+    bodyEphemeris(MARS_ID,"MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
+		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars,extra);
+    extra[0]=RMOON;extra[0]=FMOON;
+    bodyEphemeris(MOON_ID,"MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
+		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon,extra);
+    dcenter=R2D(greatCircleDistance(D2R(RAmars)*15,D2R(RAmoon)*15,D2R(DECmars),D2R(DECmoon)));
+    if(dcenter<=dcentermin){
+      tmin=t;
+      dcentermin=dcenter;
+      sizemin=R2D(atan(RMOON/dmoon));
+    }
+    if(verbose) 
+      fprintf(fp,"%.17e %e %e %e %e %e %e %e %e %e\n",t,
+	      dmars,RMARS,RAmars*15,DECmars,
+	      dmoon,RMOON,RAmoon*15,DECmoon,dcenter);
+  }
+  if(verbose){
+    fprintf(fi,"%e %e %e\n",lat,lon,alt);
+    fclose(fi);
+    fclose(fp);
+  }
+
   if(dcentermin>sizemin)
     *Status=0;
   else
