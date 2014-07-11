@@ -14,6 +14,7 @@ clean:
 cleandata:clean
 	@echo "Cleaning data..."
 	@rm -rf data/*
+	@rm -rf tmp/*
 
 cleangsl:
 	@echo "Cleaning gsl..."

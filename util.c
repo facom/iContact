@@ -476,10 +476,10 @@ int occultationCord2(double *location,double tini,double tend,double dt,
     fi=fopen(infoname,"w");
   }
   for(t=tini;t<=tend;t+=dt){
-    extra[0]=RMARS;extra[0]=FMARS;
+    extra[0]=RMARS;extra[1]=FMARS;
     bodyEphemeris(MARS_ID,"MARS",t,CPARAM,lon,lat,alt,&dmars,&ltmars,
 		  &RAmarsJ2000,&DECmarsJ2000,&RAmars,&DECmars,extra);
-    extra[0]=RMOON;extra[0]=FMOON;
+    extra[0]=RMOON;extra[1]=FMOON;
     bodyEphemeris(MOON_ID,"MOON",t,CPARAM,lon,lat,alt,&dmoon,&ltmoon,
 		  &RAmoonJ2000,&DECmoonJ2000,&RAmoon,&DECmoon,extra);
     dcenter=R2D(greatCircleDistance(D2R(RAmars)*15,D2R(RAmoon)*15,D2R(DECmars),D2R(DECmoon)));
@@ -488,13 +488,21 @@ int occultationCord2(double *location,double tini,double tend,double dt,
       dcentermin=dcenter;
       sizemin=R2D(atan(RMOON/dmoon));
     }
+    //*
     if(verbose) 
-      fprintf(fp,"%.17e %e %e %e %e %e %e %e %e %e\n",t,
+      fprintf(fp,"%.17e %.17e %.17e %.17e %.17e %.17e %.17e %.17e %.17e %.17e\n",t,
 	      dmars,RMARS,RAmars*15,DECmars,
 	      dmoon,RMOON,RAmoon*15,DECmoon,dcenter);
+    //*/
+    /*
+    if(verbose) 
+      fprintf(fp,"%.17e %.17e %.17e %.17e %.17e %.17e %.17e %.17e %.17e %.17e\n",t,
+	      dmars,RMARS,RAmarsJ2000*15,DECmarsJ2000,
+	      dmoon,RMOON,RAmoonJ2000*15,DECmoonJ2000,dcenter);
+    //*/
   }
   if(verbose){
-    fprintf(fi,"%e %e %e\n",lat,lon,alt);
+    fprintf(fi,"%.17e %.17e %.17e\n",lat,lon,alt);
     fclose(fi);
     fclose(fp);
   }
